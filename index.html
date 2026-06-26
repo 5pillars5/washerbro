@@ -32,8 +32,8 @@
   }
 
   /* ── HERO ── */
-  .hero {
-    background: var(--navy);
+  .hero { position: relative; z-index: 1;
+    background: transparent;
     text-align: center;
     padding: 48px 24px 36px;
     position: relative;
@@ -61,7 +61,7 @@
     height: 130px;
     border-radius: 50%;
     object-fit: cover;
-    object-position: top center;
+    object-position: center 28%;
     border: 3px solid var(--blue);
     display: block;
   }
@@ -88,13 +88,8 @@
     margin-bottom: 6px;
   }
 
-  .hero-brand {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(56px, 15vw, 80px);
-    line-height: 1;
-    color: var(--white);
-    letter-spacing: 4px;
-  }
+  .hero-brand { display: none; }
+  .drip-wrap { margin: 0 auto; display: block; width: 100%; max-width: 520px; }
 
   .hero-sub {
     font-size: 15px;
@@ -163,8 +158,8 @@
   }
 
   /* ── HOW IT WORKS ── */
-  .how {
-    background: #111224;
+  .how { position: relative; z-index: 1;
+    background: rgba(17,18,36,0.88);
     padding: 40px 24px;
     text-align: center;
   }
@@ -229,8 +224,8 @@
   }
 
   /* ── BOOKING FORM ── */
-  .booking {
-    background: var(--white);
+  .booking { position: relative; z-index: 1;
+    background: rgba(255,255,255,0.96);
     color: var(--text);
     padding: 40px 24px 48px;
   }
@@ -500,8 +495,8 @@
   }
 
   /* ── FOOTER ── */
-  .site-footer {
-    background: var(--navy);
+  .site-footer { position: relative; z-index: 1;
+    background: rgba(15,16,32,0.9);
     text-align: center;
     padding: 24px;
     font-size: 11px;
@@ -527,6 +522,7 @@
 </style>
 </head>
 <body>
+<canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
 
 <!-- ── HERO ── -->
 <section class="hero">
@@ -536,6 +532,7 @@
   </div>
   <div class="eyebrow">Your Neighborhood</div>
   <div class="hero-brand">Washerbro</div>
+<canvas id="dripCanvas" class="drip-wrap" height="110"></canvas>
   <div class="hero-sub">Garbage Can Cleaning · Pay What You Want</div>
   <a href="https://www.tiktok.com/@washerbro" target="_blank" class="tiktok-badge">
     <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
@@ -760,6 +757,494 @@
     document.getElementById('successScreen').classList.add('visible');
     window.scrollTo({ top: document.getElementById('book').offsetTop - 20, behavior: 'smooth' });
   }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function() {
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ══════════════════════════════════════
+  //  WATER STREAKS
+  // ══════════════════════════════════════
+  const STREAKS = [];
+  const STREAK_COUNT = 45;
+
+  function newStreak() {
+    const len = 80 + Math.random() * 160;
+    return {
+      x: Math.random() * canvas.width,
+      y: -len - Math.random() * canvas.height,
+      len,
+      speed: 1.2 + Math.random() * 2.0,
+      baseWidth: 2.5 + Math.random() * 4,
+      opacity: 0.55 + Math.random() * 0.35,
+      wobbleX: 0,
+      wobbleSpeed: (Math.random()-0.5) * 0.015,
+    };
+  }
+  for (let i = 0; i < STREAK_COUNT; i++) {
+    const s = newStreak(); s.y = Math.random() * canvas.height; STREAKS.push(s);
+  }
+
+  function drawStreak(s) {
+    const x = s.x + s.wobbleX;
+    const top = s.y - s.len, bot = s.y;
+    ctx.save();
+    const grad = ctx.createLinearGradient(x, top, x, bot);
+    grad.addColorStop(0,    `rgba(126,200,227,0)`);
+    grad.addColorStop(0.15, `rgba(160,220,245,${s.opacity*0.4})`);
+    grad.addColorStop(0.45, `rgba(200,238,255,${s.opacity})`);
+    grad.addColorStop(0.75, `rgba(180,230,252,${s.opacity*0.85})`);
+    grad.addColorStop(1,    `rgba(140,210,235,${s.opacity*0.3})`);
+    ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot);
+    ctx.strokeStyle=grad; ctx.lineWidth=s.baseWidth; ctx.lineCap='round'; ctx.stroke();
+
+    const hiGrad = ctx.createLinearGradient(x,top,x,bot);
+    hiGrad.addColorStop(0,   `rgba(255,255,255,0)`);
+    hiGrad.addColorStop(0.3, `rgba(255,255,255,${s.opacity*0.55})`);
+    hiGrad.addColorStop(0.55,`rgba(255,255,255,${s.opacity*0.7})`);
+    hiGrad.addColorStop(0.8, `rgba(255,255,255,${s.opacity*0.3})`);
+    hiGrad.addColorStop(1,   `rgba(255,255,255,0)`);
+    ctx.beginPath(); ctx.moveTo(x,top+s.len*0.1); ctx.lineTo(x,bot-s.len*0.15);
+    ctx.strokeStyle=hiGrad; ctx.lineWidth=s.baseWidth*0.35; ctx.lineCap='round'; ctx.stroke();
+
+    const br = s.baseWidth * 0.95;
+    const bg = ctx.createRadialGradient(x-br*0.3,bot-br*0.3,0, x,bot,br*1.2);
+    bg.addColorStop(0,`rgba(230,248,255,${s.opacity})`);
+    bg.addColorStop(0.5,`rgba(160,220,245,${s.opacity*0.8})`);
+    bg.addColorStop(1,`rgba(100,180,220,0)`);
+    ctx.beginPath(); ctx.arc(x,bot,br*1.2,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
+    ctx.beginPath(); ctx.arc(x-br*0.3,bot-br*0.35,br*0.38,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${s.opacity*0.8})`; ctx.fill();
+    ctx.restore();
+  }
+
+  // ══════════════════════════════════════
+  //  SOAP BUBBLES
+  // ══════════════════════════════════════
+  const BUBBLES = [];
+  const BUBBLE_COUNT = 40;
+
+  function newBubble(fromBottom) {
+    const r = 4 + Math.random() * 12;
+    return {
+      x: Math.random() * canvas.width,
+      y: fromBottom ? canvas.height+r*2 : Math.random()*canvas.height,
+      r, vx:(Math.random()-0.5)*0.45, vy:-(0.35+Math.random()*0.65),
+      hue:175+Math.random()*70, opacity:0.28+Math.random()*0.22,
+      wobble:Math.random()*Math.PI*2, wobbleSpeed:0.018+Math.random()*0.022,
+      life:0, maxLife:250+Math.random()*350,
+    };
+  }
+  for (let i=0;i<BUBBLE_COUNT;i++) BUBBLES.push(newBubble(false));
+
+  function drawBubble(b) {
+    const fade = Math.min(b.life/50,1)*Math.min((b.maxLife-b.life)/50,1);
+    const op = b.opacity*fade; if(op<0.02) return;
+    const wx = b.x+Math.sin(b.wobble)*3, r=b.r;
+    ctx.save();
+    const glow=ctx.createRadialGradient(wx,b.y,r*0.6,wx,b.y,r*2);
+    glow.addColorStop(0,`hsla(${b.hue},80%,75%,0)`);
+    glow.addColorStop(1,`hsla(${b.hue},60%,60%,${op*0.05})`);
+    ctx.beginPath();ctx.arc(wx,b.y,r*2,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+    const fill=ctx.createRadialGradient(wx-r*0.25,b.y-r*0.25,r*0.05,wx,b.y,r);
+    fill.addColorStop(0,`hsla(${b.hue+40},90%,98%,${op*0.04})`);
+    fill.addColorStop(0.5,`hsla(${b.hue},80%,90%,${op*0.03})`);
+    fill.addColorStop(1,`hsla(${b.hue-30},60%,45%,0)`);
+    ctx.beginPath();ctx.arc(wx,b.y,r,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();
+    const rimG=ctx.createLinearGradient(wx-r,b.y-r,wx+r,b.y+r);
+    rimG.addColorStop(0,`hsla(${b.hue+60},100%,97%,${op*1.4})`);
+    rimG.addColorStop(0.33,`hsla(${b.hue+20},80%,80%,${op*0.7})`);
+    rimG.addColorStop(0.66,`hsla(${b.hue-20},75%,70%,${op*0.8})`);
+    rimG.addColorStop(1,`hsla(${b.hue-50},95%,92%,${op*1.3})`);
+    ctx.beginPath();ctx.arc(wx,b.y,r,0,Math.PI*2);
+    ctx.strokeStyle=rimG;ctx.lineWidth=0.9;ctx.stroke();
+    ctx.beginPath();ctx.arc(wx-r*0.28,b.y-r*0.3,r*0.28,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${op*0.85})`;ctx.fill();
+    ctx.beginPath();ctx.arc(wx+r*0.3,b.y-r*0.18,r*0.1,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${op*0.5})`;ctx.fill();
+    ctx.restore();
+  }
+
+  // ══════════════════════════════════════
+  //  SPLASH IMPACTS — the new stars
+  // ══════════════════════════════════════
+  const IMPACTS = [];
+
+  function spawnImpact() {
+    const x = 60 + Math.random() * (canvas.width - 120);
+    const y = 80 + Math.random() * (canvas.height - 160);
+
+    // Droplet arc particles
+    const dropCount = 10 + Math.floor(Math.random() * 10);
+    const drops = [];
+    for (let i = 0; i < dropCount; i++) {
+      const angle = -Math.PI + Math.random() * Math.PI * 2; // all directions
+      const spd   = 2.5 + Math.random() * 5.5;
+      const size  = 1.5 + Math.random() * 3.5;
+      drops.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        gravity: 0.13 + Math.random() * 0.08,
+        r: size,
+        opacity: 0.75 + Math.random() * 0.25,
+        trail: [],
+      });
+    }
+
+    // Ripple rings — 2 or 3 expanding circles
+    const ringCount = 2 + Math.floor(Math.random() * 2);
+    const rings = [];
+    for (let i = 0; i < ringCount; i++) {
+      rings.push({
+        x, y,
+        r: 2 + i * 4,
+        maxR: 28 + i * 22 + Math.random() * 18,
+        expandSpeed: 1.8 + i * 0.6 + Math.random() * 0.8,
+        opacity: 0.7 - i * 0.15,
+        delay: i * 6,
+        started: false,
+      });
+    }
+
+    // Mist — soft radial glow that appears briefly
+    return {
+      x, y,
+      drops,
+      rings,
+      mist: { r: 0, maxR: 35 + Math.random()*25, opacity: 0.18 + Math.random()*0.12 },
+      life: 0,
+      maxLife: 55 + Math.floor(Math.random() * 20),
+    };
+  }
+
+  function drawImpact(imp) {
+    const t = imp.life;
+
+    // Mist — soft glow at impact point, peaks early then fades
+    const mistPeak = 12;
+    const mistFade = Math.min(t / mistPeak, 1) * Math.max(1 - (t - mistPeak) / 25, 0);
+    if (mistFade > 0) {
+      imp.mist.r = Math.min(t * 3.5, imp.mist.maxR);
+      const mg = ctx.createRadialGradient(imp.x, imp.y, 0, imp.x, imp.y, imp.mist.r);
+      mg.addColorStop(0,   `rgba(190,235,255,${imp.mist.opacity * mistFade})`);
+      mg.addColorStop(0.5, `rgba(150,215,240,${imp.mist.opacity * mistFade * 0.5})`);
+      mg.addColorStop(1,   `rgba(126,200,227,0)`);
+      ctx.beginPath();
+      ctx.arc(imp.x, imp.y, imp.mist.r, 0, Math.PI*2);
+      ctx.fillStyle = mg;
+      ctx.fill();
+    }
+
+    // Ripple rings
+    imp.rings.forEach(ring => {
+      if (t < ring.delay) return;
+      if (!ring.started) ring.started = true;
+      ring.r += ring.expandSpeed;
+      const ringProgress = ring.r / ring.maxR;
+      const ringOp = ring.opacity * (1 - ringProgress) * Math.min((t - ring.delay) / 8, 1);
+      if (ringOp > 0.01 && ring.r < ring.maxR) {
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI*2);
+        // Iridescent ring color shifts as it expands
+        const hue = 190 + ringProgress * 40;
+        ctx.strokeStyle = `hsla(${hue}, 80%, 85%, ${ringOp})`;
+        ctx.lineWidth = 1.5 - ringProgress * 0.8;
+        ctx.stroke();
+
+        // Inner bright rim
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, ring.r * 0.85, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(255,255,255,${ringOp * 0.25})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    });
+
+    // Droplet arcs with short trails
+    imp.drops.forEach(d => {
+      d.trail.push({x: d.x, y: d.y, op: d.opacity});
+      if (d.trail.length > 6) d.trail.shift();
+
+      // Trail
+      if (d.trail.length > 1) {
+        for (let i = 1; i < d.trail.length; i++) {
+          const tp = d.trail[i-1], tc = d.trail[i];
+          const trailOp = (i / d.trail.length) * d.opacity * 0.4;
+          ctx.beginPath();
+          ctx.moveTo(tp.x, tp.y); ctx.lineTo(tc.x, tc.y);
+          ctx.strokeStyle = `rgba(180,228,252,${trailOp})`;
+          ctx.lineWidth = d.r * 0.5;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+      }
+
+      // Drop bead
+      if (d.opacity > 0.02) {
+        const dg = ctx.createRadialGradient(
+          d.x - d.r*0.3, d.y - d.r*0.3, 0,
+          d.x, d.y, d.r * 1.3
+        );
+        dg.addColorStop(0,   `rgba(230,248,255,${d.opacity})`);
+        dg.addColorStop(0.5, `rgba(160,218,245,${d.opacity*0.8})`);
+        dg.addColorStop(1,   `rgba(100,180,220,0)`);
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r * 1.3, 0, Math.PI*2);
+        ctx.fillStyle = dg;
+        ctx.fill();
+
+        // Highlight
+        ctx.beginPath();
+        ctx.arc(d.x - d.r*0.3, d.y - d.r*0.35, d.r*0.35, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${d.opacity*0.75})`;
+        ctx.fill();
+      }
+
+      d.x  += d.vx;
+      d.y  += d.vy;
+      d.vy += d.gravity;
+      d.vx *= 0.98;
+      d.opacity -= 0.022;
+    });
+  }
+
+  // Spawn schedule — staggered random intervals
+  let nextSpawn = 40;
+
+  // ══════════════════════════════════════
+  //  ANIMATE
+  // ══════════════════════════════════════
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frame++;
+
+    // Spawn new splash impacts
+    if (frame >= nextSpawn) {
+      IMPACTS.push(spawnImpact());
+      // 1–3 impacts at a time, next batch in 30–90 frames
+      if (Math.random() < 0.35) IMPACTS.push(spawnImpact());
+      nextSpawn = frame + 30 + Math.floor(Math.random() * 60);
+    }
+
+    // Bubbles
+    BUBBLES.forEach((b,i) => {
+      b.x+=b.vx; b.y+=b.vy; b.wobble+=b.wobbleSpeed; b.life++;
+      drawBubble(b);
+      if (b.life>b.maxLife||b.y<-b.r*3) BUBBLES[i]=newBubble(true);
+    });
+
+    // Streaks
+    STREAKS.forEach((s,i) => {
+      s.y+=s.speed; s.wobbleX+=s.wobbleSpeed*s.len;
+      drawStreak(s);
+      if (s.y>canvas.height+20) {
+        IMPACTS.push(spawnImpact()); // streak landing spawns a splash
+        STREAKS[i]=newStreak();
+      }
+    });
+
+    // Impacts
+    for (let i=IMPACTS.length-1;i>=0;i--) {
+      const imp=IMPACTS[i];
+      drawImpact(imp);
+      imp.life++;
+      if (imp.life>imp.maxLife) IMPACTS.splice(i,1);
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
+
+
+<script>
+// ── DRIP LETTER ANIMATION ──
+(function() {
+  const dc = document.getElementById('dripCanvas');
+  if (!dc) return;
+  const ctx = dc.getContext('2d');
+  const TEXT = 'WASHERBRO';
+  const LETTER_SPACING = 4;
+
+  function setup() {
+    dc.width = dc.offsetWidth || 520;
+    dc.height = 110;
+  }
+  setup();
+  window.addEventListener('resize', setup);
+
+  // Each letter gets its own drips
+  const letters = [];
+
+  function initLetters() {
+    letters.length = 0;
+    ctx.font = `bold ${Math.min(dc.width/5.2, 82)}px 'Bebas Neue', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = LETTER_SPACING + 'px';
+
+    const totalW = dc.width;
+    const charW  = totalW / TEXT.length;
+
+    for (let i = 0; i < TEXT.length; i++) {
+      letters.push({
+        char: TEXT[i],
+        x: charW * i + charW / 2,
+        drips: [],
+        nextDrip: Math.floor(Math.random() * 120),
+      });
+    }
+  }
+  initLetters();
+  window.addEventListener('resize', initLetters);
+
+  function spawnDrip(letter) {
+    const fontSize = Math.min(dc.width/5.2, 82);
+    // random x position within the letter width band
+    const jitter = (dc.width / TEXT.length) * 0.35;
+    return {
+      x:       letter.x + (Math.random()-0.5) * jitter,
+      y:       fontSize * 0.78,          // starts near bottom of letters
+      vy:      0.6 + Math.random() * 1.0,
+      accel:   0.025 + Math.random() * 0.02,
+      width:   1.8 + Math.random() * 2.8,
+      length:  0,
+      maxLen:  18 + Math.random() * 38,
+      bead:    0,
+      beadMax: 3 + Math.random() * 4,
+      opacity: 0.85 + Math.random() * 0.15,
+      hue:     190 + Math.random() * 30,
+      done:    false,
+    };
+  }
+
+  function drawFrame() {
+    setup();
+    ctx.clearRect(0, 0, dc.width, dc.height);
+
+    const fontSize = Math.min(dc.width/5.2, 82);
+    ctx.font = `bold ${fontSize}px 'Bebas Neue', sans-serif`;
+    ctx.textAlign = 'center';
+
+    // ── Draw each letter with water sheen ──
+    letters.forEach(letter => {
+      const x = letter.x;
+      const y = fontSize * 0.88;
+
+      // Letter shadow / depth
+      ctx.fillStyle = 'rgba(0,20,40,0.4)';
+      ctx.fillText(letter.char, x+2, y+2);
+
+      // Main letter — gradient fill: bright top, slightly deeper blue bottom
+      const lg = ctx.createLinearGradient(x, y - fontSize, x, y);
+      lg.addColorStop(0,   'rgba(255,255,255,1)');
+      lg.addColorStop(0.3, 'rgba(220,245,255,1)');
+      lg.addColorStop(0.7, 'rgba(180,228,252,1)');
+      lg.addColorStop(1,   'rgba(130,200,240,1)');
+      ctx.fillStyle = lg;
+      ctx.fillText(letter.char, x, y);
+
+      // Gloss highlight — top bright strip
+      const gloss = ctx.createLinearGradient(x, y - fontSize, x, y - fontSize*0.55);
+      gloss.addColorStop(0,   'rgba(255,255,255,0.55)');
+      gloss.addColorStop(1,   'rgba(255,255,255,0)');
+      ctx.fillStyle = gloss;
+      ctx.fillText(letter.char, x, y);
+
+      // ── Spawn new drips ──
+      letter.nextDrip--;
+      if (letter.nextDrip <= 0) {
+        letter.drips.push(spawnDrip(letter));
+        letter.nextDrip = 60 + Math.floor(Math.random() * 140);
+      }
+
+      // ── Draw & update drips ──
+      letter.drips = letter.drips.filter(d => !d.done);
+      letter.drips.forEach(d => {
+        d.vy   += d.accel;
+        d.length = Math.min(d.length + d.vy, d.maxLen);
+
+        if (d.length >= d.maxLen) {
+          d.bead = Math.min(d.bead + 0.25, d.beadMax);
+        }
+
+        const tx = d.x, ty = d.y;
+        const by = ty + d.length;
+
+        // Drip stem — tapered streak
+        const dg = ctx.createLinearGradient(tx, ty, tx, by);
+        dg.addColorStop(0,   `hsla(${d.hue},85%,75%,${d.opacity})`);
+        dg.addColorStop(0.5, `hsla(${d.hue},80%,80%,${d.opacity})`);
+        dg.addColorStop(1,   `hsla(${d.hue},75%,70%,${d.opacity*0.6})`);
+
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx, by);
+        ctx.strokeStyle = dg;
+        ctx.lineWidth   = d.width;
+        ctx.lineCap     = 'round';
+        ctx.stroke();
+
+        // Center highlight on stem
+        ctx.beginPath();
+        ctx.moveTo(tx, ty + 2);
+        ctx.lineTo(tx, by - 3);
+        ctx.strokeStyle = `rgba(255,255,255,${d.opacity * 0.55})`;
+        ctx.lineWidth   = d.width * 0.3;
+        ctx.stroke();
+
+        // Bead at the tip
+        if (d.bead > 0.5) {
+          const bg = ctx.createRadialGradient(tx-d.bead*0.3, by+d.bead*0.7, 0, tx, by+d.bead, d.bead*1.3);
+          bg.addColorStop(0,   `rgba(230,248,255,${d.opacity})`);
+          bg.addColorStop(0.5, `hsla(${d.hue},80%,78%,${d.opacity*0.8})`);
+          bg.addColorStop(1,   `hsla(${d.hue},70%,65%,0)`);
+          ctx.beginPath();
+          ctx.arc(tx, by + d.bead, d.bead * 1.3, 0, Math.PI*2);
+          ctx.fillStyle = bg;
+          ctx.fill();
+
+          // Bead gloss
+          ctx.beginPath();
+          ctx.arc(tx - d.bead*0.3, by + d.bead*0.65, d.bead*0.4, 0, Math.PI*2);
+          ctx.fillStyle = `rgba(255,255,255,${d.opacity*0.8})`;
+          ctx.fill();
+
+          // Once bead falls off bottom
+          if (by + d.bead * 2.6 > dc.height) {
+            d.opacity -= 0.04;
+            if (d.opacity <= 0) d.done = true;
+          }
+        }
+      });
+    });
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  drawFrame();
+})();
 </script>
 
 </body>
